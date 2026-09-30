@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>Delivery Boy Login</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+font-family:Arial,sans-serif;
+}
+
+body{
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:linear-gradient(135deg,#0f172a,#1d4ed8);
+padding:20px;
+}
+
+.login-card{
+width:100%;
+max-width:410px;
+background:white;
+border-radius:25px;
+padding:28px 22px;
+box-shadow:0 20px 50px rgba(0,0,0,.25);
+}
+
+.logo{
+width:75px;
+height:75px;
+margin:auto;
+border-radius:50%;
+background:#2563eb;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:32px;
+}
+
+h1{
+text-align:center;
+margin-top:17px;
+color:#0f172a;
+}
+
+.subtitle{
+text-align:center;
+color:#64748b;
+margin:8px 0 20px;
+font-size:14px;
+}
+
+.tabs{
+display:flex;
+background:#eff6ff;
+border-radius:12px;
+padding:4px;
+margin-bottom:22px;
+}
+
+.tab{
+flex:1;
+border:0;
+background:transparent;
+padding:11px;
+border-radius:9px;
+font-size:14px;
+font-weight:bold;
+color:#64748b;
+cursor:pointer;
+}
+
+.tab.active{
+background:#2563eb;
+color:white;
+}
+
+.form-section{
+display:none;
+}
+
+.form-section.active{
+display:block;
+}
+
+.input-box{
+margin-bottom:15px;
+}
+
+.input-box label{
+display:block;
+font-weight:bold;
+margin-bottom:7px;
+color:#1e293b;
+font-size:13px;
+}
+
+.input-box div{
+display:flex;
+align-items:center;
+border:1px solid #cbd5e1;
+border-radius:13px;
+padding:0 13px;
+background:#fff;
+}
+
+.input-box i{
+color:#2563eb;
+}
+
+.input-box input{
+width:100%;
+border:0;
+outline:0;
+padding:14px 10px;
+font-size:15px;
+color:#0f172a;
+}
+
+.input-box input::placeholder{
+color:#94a3b8;
+}
+
+.login-btn,
+.signup-btn{
+width:100%;
+border:0;
+background:#2563eb;
+color:white;
+padding:15px;
+border-radius:13px;
+font-size:16px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.login-btn:active,
+.signup-btn:active{
+transform:scale(.98);
+}
+
+button:disabled{
+opacity:.6;
+cursor:not-allowed;
+}
+
+.message{
+display:none;
+padding:12px;
+border-radius:10px;
+margin-bottom:15px;
+font-size:13px;
+line-height:1.5;
+}
+
+.message.error{
+display:block;
+background:#fee2e2;
+color:#b91c1c;
+}
+
+.message.success{
+display:block;
+background:#dcfce7;
+color:#166534;
+}
+
+.loader{
+display:none;
+text-align:center;
+margin-top:15px;
+color:#2563eb;
+font-size:13px;
+}
+
+.small-text{
+text-align:center;
+font-size:12px;
+color:#64748b;
+margin-top:15px;
+line-height:1.5;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="login-card">
+
+<div class="logo">
+<i class="fa-solid fa-motorcycle"></i>
+</div>
+
+<h1>Delivery Boy</h1>
+
+<p class="subtitle">
+City Choice Bakers Delivery Panel
+</p>
+
+
+<div class="tabs">
+
+<button
+type="button"
+class="tab active"
+id="loginTab">
+Login
+</button>
+
+<button
+type="button"
+class="tab"
+id="signupTab">
+Signup
+</button>
+
+</div>
+
+
+<div
+id="message"
+class="message">
+</div>
+
+
+<!-- LOGIN -->
+
+<div
+id="loginSection"
+class="form-section active">
+
+<form id="loginForm">
+
+<div class="input-box">
+
+<label>Email</label>
+
+<div>
+
+<i class="fa-solid fa-envelope"></i>
+
+<input
+type="email"
+id="loginEmail"
+placeholder="Enter email"
+required>
+
+</div>
+
+</div>
+
+
+<div class="input-box">
+
+<label>Password</label>
+
+<div>
+
+<i class="fa-solid fa-lock"></i>
+
+<input
+type="password"
+id="loginPassword"
+placeholder="Enter password"
+required>
+
+</div>
+
+</div>
+
+
+<button
+class="login-btn"
+id="loginBtn"
+type="submit">
+
+<i class="fa-solid fa-right-to-bracket"></i>
+Login
+
+</button>
+
+</form>
+
+</div>
+
+
+<!-- SIGNUP -->
+
+<div
+id="signupSection"
+class="form-section">
+
+<form id="signupForm">
+
+<div class="input-box">
+
+<label>Full Name</label>
+
+<div>
+
+<i class="fa-solid fa-user"></i>
+
+<input
+type="text"
+id="signupName"
+placeholder="Enter full name"
+required>
+
+</div>
+
+</div>
+
+
+<div class="input-box">
+
+<label>Phone Number</label>
+
+<div>
+
+<i class="fa-solid fa-phone"></i>
+
+<input
+type="tel"
+id="signupPhone"
+placeholder="Enter phone number"
+required>
+
+</div>
+
+</div>
+
+
+<div class="input-box">
+
+<label>Email</label>
+
+<div>
+
+<i class="fa-solid fa-envelope"></i>
+
+<input
+type="email"
+id="signupEmail"
+placeholder="Enter email"
+required>
+
+</div>
+
+</div>
+
+
+<div class="input-box">
+
+<label>Password</label>
+
+<div>
+
+<i class="fa-solid fa-lock"></i>
+
+<input
+type="password"
+id="signupPassword"
+placeholder="Minimum 6 characters"
+minlength="6"
+required>
+
+</div>
+
+</div>
+
+
+<button
+class="signup-btn"
+id="signupBtn"
+type="submit">
+
+<i class="fa-solid fa-user-plus"></i>
+Register Delivery Boy
+
+</button>
+
+</form>
+
+<div class="small-text">
+Create your delivery boy account with email and password.
+</div>
+
+</div>
+
+
+<div id="loader" class="loader">
+
+<i class="fa-solid fa-spinner fa-spin"></i>
+Please wait...
+
+</div>
+
+</div>
+
+
+<script>
+
+const SUPABASE_URL =
+"https://ftuchilcswtnnldrugir.supabase.co";
+
+const SUPABASE_ANON_KEY =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0dWNoaWxjc3d0bm5sZHJ1Z2lyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjAyNDQsImV4cCI6MjA5NDczNjI0NH0.88SWE5lvsJD0Fw8x7h4pgAmq1WFRN1qMvmXHCXeDqsU";
+
+const sb =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
+
+
+const loginTab =
+document.getElementById("loginTab");
+
+const signupTab =
+document.getElementById("signupTab");
+
+const loginSection =
+document.getElementById("loginSection");
+
+const signupSection =
+document.getElementById("signupSection");
+
+const message =
+document.getElementById("message");
+
+const loader =
+document.getElementById("loader");
+
+
+function showMessage(text,type){
+
+message.innerText = text;
+
+message.className =
+"message " + type;
+
+}
+
+
+function hideMessage(){
+
+message.innerText = "";
+
+message.className = "message";
+
+}
+
+
+function showLoader(){
+
+loader.style.display = "block";
+
+}
+
+
+function hideLoader(){
+
+loader.style.display = "none";
+
+}
+
+
+/* LOGIN TAB */
+
+loginTab.addEventListener("click",()=>{
+
+loginTab.classList.add("active");
+
+signupTab.classList.remove("active");
+
+loginSection.classList.add("active");
+
+signupSection.classList.remove("active");
+
+hideMessage();
+
+});
+
+
+/* SIGNUP TAB */
+
+signupTab.addEventListener("click",()=>{
+
+signupTab.classList.add("active");
+
+loginTab.classList.remove("active");
+
+signupSection.classList.add("active");
+
+loginSection.classList.remove("active");
+
+hideMessage();
+
+});
+
+
+/* =========================
+LOGIN
+========================= */
+
+document
+.getElementById("loginForm")
+.addEventListener("submit",async e=>{
+
+e.preventDefault();
+
+hideMessage();
+
+showLoader();
+
+const btn =
+document.getElementById("loginBtn");
+
+btn.disabled = true;
+
+
+const email =
+document
+.getElementById("loginEmail")
+.value
+.trim()
+.toLowerCase();
+
+
+const password =
+document
+.getElementById("loginPassword")
+.value;
+
+
+try{
+
+const {
+data,
+error
+} =
+await sb.auth.signInWithPassword({
+
+email:email,
+
+password:password
+
+});
+
+
+if(error){
+
+throw error;
+
+}
+
+
+const user =
+data.user;
+
+
+if(!user){
+
+throw new Error(
+"Login failed. User not found."
+);
+
+}
+
+
+/*
+CHECK DELIVERY BOY PROFILE
+*/
+
+const {
+data:boy,
+error:boyError
+} =
+await sb
+.from("delivery_boys")
+.select(
+"id,user_id,name,phone,email,is_active"
+)
+.eq("user_id",user.id)
+.maybeSingle();
+
+
+if(boyError){
+
+console.error(boyError);
+
+await sb.auth.signOut();
+
+throw new Error(
+"Delivery boy profile check failed: " +
+boyError.message
+);
+
+}
+
+
+if(!boy){
+
+await sb.auth.signOut();
+
+throw new Error(
+"This account is not registered as a delivery boy."
+);
+
+}
+
+
+if(boy.is_active !== true){
+
+await sb.auth.signOut();
+
+throw new Error(
+"Your delivery boy account is inactive. Contact admin."
+);
+
+}
+
+
+showMessage(
+"Login successful. Opening delivery panel...",
+"success"
+);
+
+
+/*
+IMPORTANT:
+YOUR DELIVERY BOY FILE IS index.html
+*/
+
+setTimeout(()=>{
+
+window.location.href =
+"index.html";
+
+},700);
+
+
+}catch(error){
+
+console.error(error);
+
+showMessage(
+error.message ||
+"Login failed.",
+"error"
+);
+
+}
+
+
+btn.disabled = false;
+
+hideLoader();
+
+});
+
+
+/* =========================
+SIGNUP
+========================= */
+
+document
+.getElementById("signupForm")
+.addEventListener("submit",async e=>{
+
+e.preventDefault();
+
+hideMessage();
+
+showLoader();
+
+const btn =
+document.getElementById("signupBtn");
+
+btn.disabled = true;
+
+
+const name =
+document
+.getElementById("signupName")
+.value
+.trim();
+
+
+const phone =
+document
+.getElementById("signupPhone")
+.value
+.trim();
+
+
+const email =
+document
+.getElementById("signupEmail")
+.value
+.trim()
+.toLowerCase();
+
+
+const password =
+document
+.getElementById("signupPassword")
+.value;
+
+
+try{
+
+if(password.length < 6){
+
+throw new Error(
+"Password must be at least 6 characters."
+);
+
+}
+
+
+/*
+SUPABASE AUTH SIGNUP
+
+Name and phone are saved
+in Auth metadata.
+
+Your database trigger should
+create delivery_boys row.
+*/
+
+const {
+data,
+error
+} =
+await sb.auth.signUp({
+
+email:email,
+
+password:password,
+
+options:{
+data:{
+name:name,
+phone:phone
+}
+}
+
+});
+
+
+if(error){
+
+throw error;
+
+}
+
+
+/*
+EMAIL CONFIRMATION OFF
+*/
+
+if(data.session){
+
+showMessage(
+"Registration successful. Opening delivery panel...",
+"success"
+);
+
+setTimeout(()=>{
+
+window.location.href =
+"index.html";
+
+},800);
+
+return;
+
+}
+
+
+/*
+EMAIL CONFIRMATION ON
+*/
+
+showMessage(
+"Registration successful. Please verify your email, then login.",
+"success"
+);
+
+document
+.getElementById("signupForm")
+.reset();
+
+loginTab.click();
+
+
+}catch(error){
+
+console.error(error);
+
+showMessage(
+error.message ||
+"Registration failed.",
+"error"
+);
+
+}
+
+
+btn.disabled = false;
+
+hideLoader();
+
+});
+
+</script>
+
+</body>
+</html>

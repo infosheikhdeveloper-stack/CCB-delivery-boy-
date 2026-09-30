@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>Delivery Boy</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+
+<!-- Android -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iPhone/iPad -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Delivery Boy">
+
+<!-- App Icon -->
+<link rel="apple-touch-icon" href="logo.png">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<style>
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f1f5f9;
+color:#0f172a;
+padding-bottom:30px;
+}
+
+
+/* =========================
+HEADER
+========================= */
+
+header{
+background:#2563eb;
+color:white;
+padding:20px;
+position:sticky;
+top:0;
+z-index:10;
+}
+
+.header-inner{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.header-title{
+font-size:21px;
+font-weight:800;
+}
+
+.logout{
+border:0;
+background:white;
+color:#2563eb;
+padding:9px 12px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+}
+
+
+/* =========================
+CONTAINER
+========================= */
+
+.container{
+max-width:700px;
+margin:auto;
+padding:16px;
+}
+
+
+/* =========================
+BOY CARD
+========================= */
+
+.boy-card{
+background:white;
+padding:17px;
+border-radius:18px;
+margin-bottom:16px;
+box-shadow:0 5px 20px rgba(0,0,0,.07);
+}
+
+.boy-name{
+font-size:20px;
+font-weight:800;
+}
+
+.boy-phone{
+color:#64748b;
+margin-top:5px;
+}
+
+
+/* =========================
+ORDER CARD
+========================= */
+
+.order-card{
+background:white;
+border-radius:20px;
+padding:17px;
+margin-bottom:16px;
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.order-head{
+display:flex;
+justify-content:space-between;
+gap:10px;
+}
+
+.order-head h2{
+font-size:19px;
+}
+
+.order-head p{
+color:#64748b;
+margin-top:5px;
+}
+
+.status{
+background:#dbeafe;
+color:#1d4ed8;
+padding:7px 10px;
+border-radius:20px;
+font-size:12px;
+font-weight:bold;
+height:max-content;
+white-space:nowrap;
+}
+
+.status.picked{
+background:#fef3c7;
+color:#b45309;
+}
+
+.status.out{
+background:#ede9fe;
+color:#6d28d9;
+}
+
+.status.delivered{
+background:#dcfce7;
+color:#15803d;
+}
+
+
+/* =========================
+INFO
+========================= */
+
+.info{
+margin-top:15px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.info div{
+background:#f8fafc;
+padding:10px;
+border-radius:10px;
+}
+
+.info small{
+display:block;
+color:#64748b;
+margin-bottom:4px;
+}
+
+
+/* =========================
+ITEMS
+========================= */
+
+.items{
+margin-top:15px;
+}
+
+.item{
+display:flex;
+justify-content:space-between;
+gap:10px;
+padding:9px 0;
+border-bottom:1px solid #e2e8f0;
+font-size:14px;
+}
+
+
+/* =========================
+ADDRESS
+========================= */
+
+.address{
+margin-top:15px;
+background:#eff6ff;
+padding:13px;
+border-radius:12px;
+line-height:1.6;
+}
+
+
+/* =========================
+PAYMENT
+========================= */
+
+.payment{
+margin-top:15px;
+background:#f8fafc;
+padding:13px;
+border-radius:12px;
+line-height:1.7;
+}
+
+
+/* =========================
+BUTTONS
+========================= */
+
+.buttons{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+margin-top:15px;
+}
+
+.btn{
+border:0;
+padding:12px 14px;
+border-radius:11px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.pickup{
+background:#f59e0b;
+color:white;
+}
+
+.out{
+background:#7c3aed;
+color:white;
+}
+
+.deliver{
+background:#2563eb;
+color:white;
+}
+
+.disabled{
+opacity:.4;
+pointer-events:none;
+}
+
+
+/* =========================
+EMPTY
+========================= */
+
+.empty{
+background:white;
+padding:35px 20px;
+border-radius:18px;
+text-align:center;
+color:#64748b;
+}
+
+.empty i{
+display:block;
+font-size:40px;
+margin-bottom:12px;
+}
+
+
+/* =========================
+PACKAGE MODAL
+========================= */
+
+.code-modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.55);
+z-index:100;
+align-items:center;
+justify-content:center;
+padding:20px;
+}
+
+.code-modal.show{
+display:flex;
+}
+
+.modal{
+background:white;
+width:100%;
+max-width:380px;
+padding:22px;
+border-radius:20px;
+}
+
+.modal h2{
+margin-bottom:10px;
+}
+
+.modal p{
+color:#64748b;
+margin-bottom:15px;
+line-height:1.5;
+}
+
+.modal input{
+width:100%;
+padding:14px;
+border:1px solid #cbd5e1;
+border-radius:12px;
+outline:none;
+font-size:18px;
+text-align:center;
+letter-spacing:3px;
+}
+
+.modal-actions{
+display:flex;
+gap:10px;
+margin-top:15px;
+}
+
+.modal-actions button{
+flex:1;
+padding:13px;
+border:0;
+border-radius:11px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.cancel{
+background:#e2e8f0;
+}
+
+.verify{
+background:#2563eb;
+color:white;
+}
+
+
+/* =====================================================
+   INSTALL APP POPUP
+===================================================== */
+
+.install-popup{
+
+position:fixed;
+
+left:15px;
+right:15px;
+bottom:18px;
+
+background:white;
+
+border-radius:20px;
+
+padding:16px;
+
+box-shadow:
+0 15px 45px rgba(0,0,0,.25);
+
+z-index:9999;
+
+display:none;
+
+animation:installSlide .45s ease;
+
+border:1px solid #e2e8f0;
+
+}
+
+.install-popup.show{
+display:block;
+}
+
+@keyframes installSlide{
+
+from{
+transform:translateY(120%);
+opacity:0;
+}
+
+to{
+transform:translateY(0);
+opacity:1;
+}
+
+}
+
+.install-top{
+
+display:flex;
+
+align-items:center;
+
+gap:13px;
+
+}
+
+.install-icon{
+
+width:52px;
+height:52px;
+
+border-radius:15px;
+
+background:#2563eb;
+
+color:white;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:23px;
+
+flex-shrink:0;
+
+}
+
+.install-content{
+
+flex:1;
+
+}
+
+.install-content h3{
+
+font-size:17px;
+
+font-weight:800;
+
+margin-bottom:4px;
+
+color:#0f172a;
+
+}
+
+.install-content p{
+
+font-size:13px;
+
+color:#64748b;
+
+line-height:1.4;
+
+}
+
+.install-close{
+
+border:0;
+
+background:#f1f5f9;
+
+width:32px;
+height:32px;
+
+border-radius:50%;
+
+font-size:16px;
+
+cursor:pointer;
+
+color:#475569;
+
+}
+
+.install-buttons{
+
+display:flex;
+
+gap:9px;
+
+margin-top:14px;
+
+}
+
+.install-btn{
+
+flex:1;
+
+border:0;
+
+padding:12px;
+
+border-radius:12px;
+
+font-weight:800;
+
+cursor:pointer;
+
+font-size:14px;
+
+}
+
+.install-now{
+
+background:#2563eb;
+
+color:white;
+
+}
+
+.install-later{
+
+background:#e2e8f0;
+
+color:#334155;
+
+}
+
+
+/* =========================
+INSTALLED MESSAGE
+========================= */
+
+.installed-toast{
+
+position:fixed;
+
+left:20px;
+right:20px;
+
+bottom:20px;
+
+background:#16a34a;
+
+color:white;
+
+padding:14px;
+
+border-radius:14px;
+
+text-align:center;
+
+font-weight:bold;
+
+z-index:10000;
+
+display:none;
+
+box-shadow:0 10px 30px rgba(0,0,0,.2);
+
+}
+
+.installed-toast.show{
+display:block;
+}
+
+
+/* =========================
+MOBILE
+========================= */
+
+@media(max-width:600px){
+
+.info{
+grid-template-columns:1fr 1fr;
+}
+
+.install-popup{
+
+left:10px;
+right:10px;
+bottom:10px;
+
+}
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+<div class="header-inner">
+
+<div class="header-title">
+
+<i class="fa-solid fa-motorcycle"></i>
+
+Delivery Boy
+
+</div>
+
+<button
+class="logout"
+onclick="logout()">
+
+Logout
+
+</button>
+
+</div>
+
+</header>
+
+
+<div class="container">
+
+
+<div class="boy-card">
+
+<div
+class="boy-name"
+id="boyName">
+
+Loading...
+
+</div>
+
+<div
+class="boy-phone"
+id="boyPhone">
+
+</div>
+
+</div>
+
+
+<div id="ordersBox">
+
+Loading orders...
+
+</div>
+
+
+</div>
+
+
+
+<!-- =========================
+PACKAGE CODE MODAL
+========================= -->
+
+<div
+class="code-modal"
+id="codeModal">
+
+<div class="modal">
+
+<h2>
+Verify Package
+</h2>
+
+<p>
+Enter the package code given by the customer to complete delivery.
+</p>
+
+<input
+id="packageInput"
+placeholder="PACKAGE CODE"
+autocomplete="off"
+inputmode="numeric"
+maxlength="10">
+
+<div class="modal-actions">
+
+<button
+class="cancel"
+onclick="closeModal()">
+
+Cancel
+
+</button>
+
+<button
+class="verify"
+onclick="verifyDelivery()">
+
+Verify & Deliver
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- =========================
+INSTALL APP POPUP
+========================= -->
+
+<div
+class="install-popup"
+id="installPopup">
+
+<div class="install-top">
+
+<div class="install-icon">
+
+<i class="fa-solid fa-mobile-screen-button"></i>
+
+</div>
+
+<div class="install-content">
+
+<h3>
+Install Delivery Boy App
+</h3>
+
+<p>
+Install this app for quick access from your home screen.
+</p>
+
+</div>
+
+<button
+class="install-close"
+onclick="closeInstallPopup()">
+
+<i class="fa-solid fa-xmark"></i>
+
+</button>
+
+</div>
+
+
+<div class="install-buttons">
+
+<button
+class="install-btn install-later"
+onclick="closeInstallPopup()">
+
+Later
+
+</button>
+
+<button
+class="install-btn install-now"
+onclick="installApp()">
+
+<i class="fa-solid fa-download"></i>
+
+Install App
+
+</button>
+
+</div>
+
+</div>
+
+
+
+<div
+class="installed-toast"
+id="installedToast">
+
+<i class="fa-solid fa-circle-check"></i>
+
+App installed successfully
+
+</div>
+
+
+
+<script>
+
+/* =====================================================
+   SUPABASE
+===================================================== */
+
+const SUPABASE_URL =
+"https://ftuchilcswtnnldrugir.supabase.co";
+
+const SUPABASE_ANON_KEY =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0dWNoaWxjc3d0bm5sZHJ1Z2lyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjAyNDQsImV4cCI6MjA5NDczNjI0NH0.88SWE5lvsJD0Fw8x7h4pgAmq1WFRN1qMvmXHCXeDqsU";
+
+/*
+IMPORTANT:
+Agar upar wali ANON KEY tumhari actual working key
+nahi hai to apni existing Supabase ANON KEY yahan lagao.
+*/
+
+const sb =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
+
+
+let currentBoy = null;
+
+let selectedOrder = null;
+
+
+/* =====================================================
+   PWA INSTALL
+===================================================== */
+
+let deferredInstallPrompt = null;
+
+
+/*
+Browser ka install prompt capture karo
+*/
+
+window.addEventListener(
+"beforeinstallprompt",
+(event)=>{
+
+event.preventDefault();
+
+deferredInstallPrompt = event;
+
+
+/*
+Popup show karo
+*/
+
+setTimeout(()=>{
+
+showInstallPopup();
+
+},1500);
+
+}
+);
+
+
+/*
+App successfully install hone ke baad
+*/
+
+window.addEventListener(
+"appinstalled",
+()=>{
+
+deferredInstallPrompt = null;
+
+closeInstallPopup();
+
+const toast =
+document.getElementById(
+"installedToast"
+);
+
+toast.classList.add("show");
+
+setTimeout(()=>{
+
+toast.classList.remove("show");
+
+},3000);
+
+}
+);
+
+
+/*
+Show popup
+*/
+
+function showInstallPopup(){
+
+/*
+Agar app already installed hai
+to popup nahi dikhana.
+*/
+
+if(
+window.matchMedia(
+"(display-mode: standalone)"
+).matches
+){
+
+return;
+
+}
+
+
+if(
+window.navigator.standalone === true
+){
+
+return;
+
+}
+
+
+const popup =
+document.getElementById(
+"installPopup"
+);
+
+if(popup){
+
+popup.classList.add("show");
+
+}
+
+}
+
+
+/*
+Close popup
+*/
+
+function closeInstallPopup(){
+
+const popup =
+document.getElementById(
+"installPopup"
+);
+
+if(popup){
+
+popup.classList.remove("show");
+
+}
+
+}
+
+
+/*
+Install App button
+*/
+
+async function installApp(){
+
+if(!deferredInstallPrompt){
+
+/*
+iPhone/iPad ke liye
+*/
+
+const isIOS =
+/iPad|iPhone|iPod/.test(
+navigator.userAgent
+) &&
+!window.MSStream;
+
+if(isIOS){
+
+closeInstallPopup();
+
+alert(
+"iPhone par install karne ke liye:\n\n" +
+"1. Share button dabao\n" +
+"2. Add to Home Screen select karo."
+);
+
+return;
+
+}
+
+
+/*
+Agar browser install prompt available
+nahi hai
+*/
+
+closeInstallPopup();
+
+alert(
+"Install option abhi browser mein available nahi hai. " +
+"Chrome mein page open karke dobara try karo."
+);
+
+return;
+
+}
+
+
+deferredInstallPrompt.prompt();
+
+
+const result =
+await deferredInstallPrompt.userChoice;
+
+
+console.log(
+"Install choice:",
+result.outcome
+);
+
+deferredInstallPrompt = null;
+
+closeInstallPopup();
+
+}
+
+
+/* =====================================================
+   LOAD BOY
+===================================================== */
+
+async function loadBoy(){
+
+try{
+
+const {
+data:{user},
+error:authError
+} =
+await sb.auth.getUser();
+
+
+if(authError){
+
+console.error(authError);
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+
+if(!user){
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+
+/*
+GET DELIVERY BOY PROFILE
+*/
+
+const {
+data:boy,
+error:boyError
+} =
+await sb
+.from("delivery_boys")
+.select(
+"id,user_id,name,phone,email,is_active"
+)
+.eq("user_id",user.id)
+.maybeSingle();
+
+
+if(boyError){
+
+console.error(
+"Delivery boy error:",
+boyError
+);
+
+document.getElementById(
+"ordersBox"
+).innerHTML = `
+
+<div class="empty">
+
+<i class="fa-solid fa-triangle-exclamation"></i>
+
+<h3>Profile Error</h3>
+
+<p>
+${escapeHTML(boyError.message)}
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+
+if(!boy){
+
+await sb.auth.signOut();
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+
+if(boy.is_active !== true){
+
+await sb.auth.signOut();
+
+alert(
+"Your delivery boy account is inactive."
+);
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+
+currentBoy = boy;
+
+
+document.getElementById(
+"boyName"
+).innerText =
+boy.name || "Delivery Boy";
+
+
+document.getElementById(
+"boyPhone"
+).innerText =
+boy.phone || "";
+
+
+loadOrders();
+
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"Unable to load delivery boy account."
+);
+
+window.location.href =
+"login.html";
+
+}
+
+}
+
+
+/* =====================================================
+   LOAD ORDERS
+===================================================== */
+
+async function loadOrders(){
+
+const box =
+document.getElementById(
+"ordersBox"
+);
+
+
+if(!currentBoy)
+return;
+
+
+const {
+data,
+error
+} =
+await sb
+.from("orders")
+.select("*")
+.eq(
+"delivery_boy_id",
+currentBoy.id
+)
+.neq(
+"status",
+"Delivered"
+)
+.neq(
+"status",
+"Cancelled"
+)
+.order(
+"created_at",
+{
+ascending:false
+}
+);
+
+
+if(error){
+
+console.error(error);
+
+box.innerHTML = `
+
+<div class="empty">
+
+<i class="fa-solid fa-triangle-exclamation"></i>
+
+<h3>Unable to load orders</h3>
+
+<p>
+${escapeHTML(error.message)}
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+
+if(!data || data.length === 0){
+
+box.innerHTML = `
+
+<div class="empty">
+
+<i class="fa-solid fa-box-open"></i>
+
+<h3>No Assigned Orders</h3>
+
+<p>
+Admin has not assigned any active order to you.
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+
+box.innerHTML = "";
+
+
+data.forEach(order=>{
+
+
+let items = [];
+
+
+try{
+
+items =
+typeof order.items === "string"
+? JSON.parse(order.items)
+: (order.items || []);
+
+}catch{
+
+items = [];
+
+}
+
+
+const itemsHTML =
+items.map(item=>`
+
+<div class="item">
+
+<span>
+
+${escapeHTML(
+item.title || "Product"
+)}
+
+× ${Number(item.qty) || 1}
+
+</span>
+
+<b>
+
+₹${
+(
+Number(item.price) || 0
+) *
+(
+Number(item.qty) || 1
+)
+}
+
+</b>
+
+</div>
+
+`).join("");
+
+
+const status =
+order.status || "Assigned";
+
+
+let pickupDisabled =
+status !== "Assigned" &&
+status !== "Accepted"
+? "disabled"
+: "";
+
+
+let outDisabled =
+status !== "Picked Up"
+? "disabled"
+: "";
+
+
+let deliveredDisabled =
+status !== "Out for Delivery"
+? "disabled"
+: "";
+
+
+let statusClass = "";
+
+
+if(status === "Picked Up"){
+
+statusClass = "picked";
+
+}
+
+
+if(status === "Out for Delivery"){
+
+statusClass = "out";
+
+}
+
+
+if(status === "Delivered"){
+
+statusClass = "delivered";
+
+}
+
+
+/*
+PAYMENT
+*/
+
+const paymentMethod =
+order.payment_method ||
+order.payment_type ||
+"-";
+
+
+const paidAmount =
+Number(
+order.amount_paid ??
+order.paid_amount ??
+0
+);
+
+
+const total =
+Number(
+order.grand_total || 0
+);
+
+
+const due =
+Math.max(
+total - paidAmount,
+0
+);
+
+
+box.innerHTML += `
+
+<div class="order-card">
+
+<div class="order-head">
+
+<div>
+
+<h2>
+
+Order #
+
+${escapeHTML(
+String(
+order.order_id ||
+order.id
+)
+)}
+
+</h2>
+
+<p>
+
+${escapeHTML(
+order.customer_name || "-"
+)}
+
+</p>
+
+</div>
+
+<div class="status ${statusClass}">
+
+${escapeHTML(status)}
+
+</div>
+
+</div>
+
+
+<div class="info">
+
+<div>
+
+<small>
+Phone
+</small>
+
+<b>
+
+${escapeHTML(
+order.phone || "-"
+)}
+
+</b>
+
+</div>
+
+
+<div>
+
+<small>
+Total
+</small>
+
+<b>
+
+₹${total}
+
+</b>
+
+</div>
+
+
+<div>
+
+<small>
+Package Code
+</small>
+
+<b>
+
+${escapeHTML(
+order.package_code || "-"
+)}
+
+</b>
+
+</div>
+
+
+<div>
+
+<small>
+Payment
+</small>
+
+<b>
+
+${escapeHTML(paymentMethod)}
+
+</b>
+
+</div>
+
+</div>
+
+
+<div class="items">
+
+${itemsHTML}
+
+</div>
+
+
+<div class="address">
+
+<b>
+
+<i class="fa-solid fa-location-dot"></i>
+
+Delivery Address
+
+</b>
+
+<br>
+
+${escapeHTML(
+order.address1 || ""
+)}
+
+<br>
+
+${escapeHTML(
+order.address2 || ""
+)}
+
+<br>
+
+${escapeHTML(
+order.district || ""
+)}
+
+<br>
+
+${escapeHTML(
+order.state || ""
+)}
+
+-
+
+${escapeHTML(
+order.pincode || ""
+)}
+
+</div>
+
+
+<div class="payment">
+
+<b>
+
+<i class="fa-solid fa-money-bill"></i>
+
+Payment
+
+</b>
+
+<br>
+
+Method:
+${escapeHTML(paymentMethod)}
+
+<br>
+
+Paid:
+₹${paidAmount}
+
+<br>
+
+Due:
+₹${due}
+
+<br>
+
+Total:
+₹${total}
+
+</div>
+
+
+<div class="buttons">
+
+
+<button
+class="btn pickup ${pickupDisabled}"
+onclick="updateDelivery(
+'${escapeHTML(order.id)}',
+'Picked Up'
+)">
+
+<i class="fa-solid fa-box"></i>
+
+Picked Up
+
+</button>
+
+
+<button
+class="btn out ${outDisabled}"
+onclick="updateDelivery(
+'${escapeHTML(order.id)}',
+'Out for Delivery'
+)">
+
+<i class="fa-solid fa-motorcycle"></i>
+
+Out for Delivery
+
+</button>
+
+
+<button
+class="btn deliver ${deliveredDisabled}"
+onclick="openDeliveryModal(
+'${escapeHTML(order.id)}'
+)">
+
+<i class="fa-solid fa-check"></i>
+
+Delivered
+
+</button>
+
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(value){
+
+return String(value ?? "")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+
+/* =====================================================
+   UPDATE DELIVERY
+===================================================== */
+
+async function updateDelivery(
+id,
+status
+){
+
+if(!currentBoy)
+return;
+
+
+const updateData = {
+
+status:status,
+
+delivery_status:status
+
+};
+
+
+if(status === "Picked Up"){
+
+updateData.picked_up_at =
+new Date().toISOString();
+
+}
+
+
+if(status === "Out for Delivery"){
+
+updateData.out_for_delivery_at =
+new Date().toISOString();
+
+}
+
+
+const {
+error
+} =
+await sb
+.from("orders")
+.update(updateData)
+.eq("id",id)
+.eq(
+"delivery_boy_id",
+currentBoy.id
+);
+
+
+if(error){
+
+alert(
+"Status update failed:\n\n" +
+error.message
+);
+
+return;
+
+}
+
+
+await loadOrders();
+
+}
+
+
+/* =====================================================
+   OPEN DELIVERY MODAL
+===================================================== */
+
+function openDeliveryModal(id){
+
+selectedOrder = id;
+
+document
+.getElementById(
+"packageInput"
+)
+.value = "";
+
+
+document
+.getElementById(
+"codeModal"
+)
+.classList.add("show");
+
+
+setTimeout(()=>{
+
+document
+.getElementById(
+"packageInput"
+)
+.focus();
+
+},100);
+
+}
+
+
+/* =====================================================
+   CLOSE MODAL
+===================================================== */
+
+function closeModal(){
+
+document
+.getElementById(
+"codeModal"
+)
+.classList.remove("show");
+
+selectedOrder = null;
+
+}
+
+
+/* =====================================================
+   VERIFY PACKAGE CODE
+===================================================== */
+
+async function verifyDelivery(){
+
+if(!selectedOrder)
+return;
+
+
+const entered =
+document
+.getElementById(
+"packageInput"
+)
+.value
+.trim();
+
+
+if(!entered){
+
+alert(
+"Package code enter karo."
+);
+
+return;
+
+}
+
+
+const {
+data:order,
+error
+} =
+await sb
+.from("orders")
+.select(
+"id,package_code"
+)
+.eq(
+"id",
+selectedOrder
+)
+.eq(
+"delivery_boy_id",
+currentBoy.id
+)
+.single();
+
+
+if(error || !order){
+
+alert(
+"Order not found."
+);
+
+return;
+
+}
+
+
+const actualCode =
+String(
+order.package_code || ""
+)
+.trim();
+
+
+if(
+entered.toUpperCase() !==
+actualCode.toUpperCase()
+){
+
+alert(
+"Wrong package code."
+);
+
+return;
+
+}
+
+
+/*
+CODE CORRECT
+*/
+
+const now =
+new Date().toISOString();
+
+
+const {
+error:updateError
+} =
+await sb
+.from("orders")
+.update({
+
+status:"Delivered",
+
+delivery_status:"Delivered",
+
+delivered_at:now,
+
+delivery_verified_at:now
+
+})
+.eq(
+"id",
+selectedOrder
+)
+.eq(
+"delivery_boy_id",
+currentBoy.id
+);
+
+
+if(updateError){
+
+alert(
+"Delivery update failed:\n\n" +
+updateError.message
+);
+
+return;
+
+}
+
+
+alert(
+"Order Delivered Successfully."
+);
+
+
+closeModal();
+
+loadOrders();
+
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+async function logout(){
+
+await sb.auth.signOut();
+
+window.location.href =
+"login.html";
+
+}
+
+
+/* =====================================================
+   SERVICE WORKER
+===================================================== */
+
+if(
+"serviceWorker" in navigator
+){
+
+window.addEventListener(
+"load",
+()=>{
+
+navigator.serviceWorker
+.register("sw.js")
+.then(
+registration=>{
+
+console.log(
+"Service Worker registered:",
+registration.scope
+);
+
+}
+)
+.catch(
+error=>{
+
+console.error(
+"Service Worker error:",
+error
+);
+
+}
+);
+
+});
+
+}
+
+
+/* =====================================================
+   START
+===================================================== */
+
+loadBoy();
+
+</script>
+
+</body>
+
+</html>
