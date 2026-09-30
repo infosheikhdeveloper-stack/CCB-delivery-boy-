@@ -242,7 +242,9 @@ class="message">
 </div>
 
 
-<!-- LOGIN -->
+<!-- =========================
+LOGIN
+========================= -->
 
 <div
 id="loginSection"
@@ -262,6 +264,7 @@ class="form-section active">
 type="email"
 id="loginEmail"
 placeholder="Enter email"
+autocomplete="email"
 required>
 
 </div>
@@ -281,6 +284,7 @@ required>
 type="password"
 id="loginPassword"
 placeholder="Enter password"
+autocomplete="current-password"
 required>
 
 </div>
@@ -303,7 +307,9 @@ Login
 </div>
 
 
-<!-- SIGNUP -->
+<!-- =========================
+SIGNUP
+========================= -->
 
 <div
 id="signupSection"
@@ -323,6 +329,7 @@ class="form-section">
 type="text"
 id="signupName"
 placeholder="Enter full name"
+autocomplete="name"
 required>
 
 </div>
@@ -342,6 +349,7 @@ required>
 type="tel"
 id="signupPhone"
 placeholder="Enter phone number"
+autocomplete="tel"
 required>
 
 </div>
@@ -361,6 +369,7 @@ required>
 type="email"
 id="signupEmail"
 placeholder="Enter email"
+autocomplete="email"
 required>
 
 </div>
@@ -380,6 +389,7 @@ required>
 type="password"
 id="signupPassword"
 placeholder="Minimum 6 characters"
+autocomplete="new-password"
 minlength="6"
 required>
 
@@ -419,6 +429,10 @@ Please wait...
 
 <script>
 
+/* =========================================
+   SUPABASE
+========================================= */
+
 const SUPABASE_URL =
 "https://ftuchilcswtnnldrugir.supabase.co";
 
@@ -431,6 +445,10 @@ SUPABASE_URL,
 SUPABASE_ANON_KEY
 );
 
+
+/* =========================================
+   ELEMENTS
+========================================= */
 
 const loginTab =
 document.getElementById("loginTab");
@@ -451,6 +469,10 @@ const loader =
 document.getElementById("loader");
 
 
+/* =========================================
+   MESSAGE
+========================================= */
+
 function showMessage(text,type){
 
 message.innerText = text;
@@ -470,6 +492,10 @@ message.className = "message";
 }
 
 
+/* =========================================
+   LOADER
+========================================= */
+
 function showLoader(){
 
 loader.style.display = "block";
@@ -484,7 +510,9 @@ loader.style.display = "none";
 }
 
 
-/* LOGIN TAB */
+/* =========================================
+   LOGIN TAB
+========================================= */
 
 loginTab.addEventListener("click",()=>{
 
@@ -501,7 +529,9 @@ hideMessage();
 });
 
 
-/* SIGNUP TAB */
+/* =========================================
+   SIGNUP TAB
+========================================= */
 
 signupTab.addEventListener("click",()=>{
 
@@ -518,9 +548,124 @@ hideMessage();
 });
 
 
-/* =========================
-LOGIN
-========================= */
+/* =========================================
+   CHECK DELIVERY BOY PROFILE
+========================================= */
+
+async function getDeliveryBoy(userId){
+
+const {
+data,
+error
+} = await sb
+.from("delivery_boys")
+.select(
+"id,user_id,name,phone,email,is_active"
+)
+.eq("user_id",userId)
+.maybeSingle();
+
+if(error){
+
+console.error(
+"Delivery Boy Profile Error:",
+error
+);
+
+throw new Error(
+"Delivery boy profile check failed: " +
+error.message
+);
+
+}
+
+return data;
+
+}
+
+
+/* =========================================
+   CHECK EXISTING SESSION
+========================================= */
+
+async function checkExistingSession(){
+
+try{
+
+const {
+data,
+error
+} =
+await sb.auth.getSession();
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+const user =
+data?.session?.user;
+
+if(!user){
+
+return;
+
+}
+
+
+/*
+USER LOGGED IN
+CHECK WHETHER HE IS
+ACTUALLY A DELIVERY BOY
+*/
+
+const boy =
+await getDeliveryBoy(user.id);
+
+
+if(!boy){
+
+await sb.auth.signOut();
+
+return;
+
+}
+
+
+if(boy.is_active !== true){
+
+await sb.auth.signOut();
+
+return;
+
+}
+
+
+/*
+DELIVERY BOY ALREADY LOGGED IN
+*/
+
+window.location.replace("index.html");
+
+}
+catch(error){
+
+console.error(
+"Session Check:",
+error
+);
+
+}
+
+}
+
+
+/* =========================================
+   DELIVERY BOY LOGIN
+========================================= */
 
 document
 .getElementById("loginForm")
@@ -554,6 +699,10 @@ document
 
 try{
 
+/*
+SUPABASE AUTH LOGIN
+*/
+
 const {
 data,
 error
@@ -575,7 +724,7 @@ throw error;
 
 
 const user =
-data.user;
+data?.user;
 
 
 if(!user){
@@ -588,34 +737,15 @@ throw new Error(
 
 
 /*
-CHECK DELIVERY BOY PROFILE
+IMPORTANT:
+
+CHECK ONLY delivery_boys TABLE.
+
+CUSTOMER users TABLE IS NOT USED HERE.
 */
 
-const {
-data:boy,
-error:boyError
-} =
-await sb
-.from("delivery_boys")
-.select(
-"id,user_id,name,phone,email,is_active"
-)
-.eq("user_id",user.id)
-.maybeSingle();
-
-
-if(boyError){
-
-console.error(boyError);
-
-await sb.auth.signOut();
-
-throw new Error(
-"Delivery boy profile check failed: " +
-boyError.message
-);
-
-}
+const boy =
+await getDeliveryBoy(user.id);
 
 
 if(!boy){
@@ -629,6 +759,10 @@ throw new Error(
 }
 
 
+/*
+CHECK ACTIVE STATUS
+*/
+
 if(boy.is_active !== true){
 
 await sb.auth.signOut();
@@ -640,48 +774,51 @@ throw new Error(
 }
 
 
+/*
+LOGIN SUCCESS
+*/
+
 showMessage(
 "Login successful. Opening delivery panel...",
 "success"
 );
 
 
-/*
-IMPORTANT:
-YOUR DELIVERY BOY FILE IS index.html
-*/
-
 setTimeout(()=>{
 
-window.location.href =
-"index.html";
+window.location.replace(
+"index.html"
+);
 
 },700);
 
 
-}catch(error){
+}
+catch(error){
 
-console.error(error);
+console.error(
+"Delivery Login Error:",
+error
+);
 
 showMessage(
-error.message ||
+error?.message ||
 "Login failed.",
 "error"
 );
-
-}
-
 
 btn.disabled = false;
 
 hideLoader();
 
+}
+
 });
 
 
-/* =========================
-SIGNUP
-========================= */
+/* =========================================
+   DELIVERY BOY SIGNUP
+========================================= */
 
 document
 .getElementById("signupForm")
@@ -729,6 +866,28 @@ document
 
 try{
 
+/*
+VALIDATION
+*/
+
+if(name.length < 2){
+
+throw new Error(
+"Please enter your full name."
+);
+
+}
+
+
+if(phone.length < 7){
+
+throw new Error(
+"Please enter a valid phone number."
+);
+
+}
+
+
 if(password.length < 6){
 
 throw new Error(
@@ -739,13 +898,10 @@ throw new Error(
 
 
 /*
-SUPABASE AUTH SIGNUP
+AUTH SIGNUP
 
-Name and phone are saved
-in Auth metadata.
-
-Your database trigger should
-create delivery_boys row.
+Name + phone are saved
+inside Supabase Auth metadata.
 */
 
 const {
@@ -776,10 +932,55 @@ throw error;
 
 
 /*
-EMAIL CONFIRMATION OFF
+SESSION CREATED
+
+If email confirmation is OFF,
+we have a logged-in user.
 */
 
-if(data.session){
+if(data?.session && data?.user){
+
+/*
+CHECK DELIVERY PROFILE
+
+Normally your database trigger
+should create delivery_boys row.
+*/
+
+let boy = null;
+
+try{
+
+boy =
+await getDeliveryBoy(
+data.user.id
+);
+
+}
+catch(profileError){
+
+console.error(
+profileError
+);
+
+}
+
+
+/*
+PROFILE EXISTS
+*/
+
+if(boy){
+
+if(boy.is_active !== true){
+
+await sb.auth.signOut();
+
+throw new Error(
+"Delivery boy account created but it is inactive. Contact admin."
+);
+
+}
 
 showMessage(
 "Registration successful. Opening delivery panel...",
@@ -788,10 +989,30 @@ showMessage(
 
 setTimeout(()=>{
 
-window.location.href =
-"index.html";
+window.location.replace(
+"index.html"
+);
 
 },800);
+
+return;
+
+}
+
+
+/*
+AUTH ACCOUNT CREATED BUT
+DELIVERY PROFILE NOT FOUND
+
+Do not open delivery panel.
+*/
+
+await sb.auth.signOut();
+
+showMessage(
+"Auth account created, but delivery boy profile was not created. Please contact admin.",
+"error"
+);
 
 return;
 
@@ -811,27 +1032,44 @@ document
 .getElementById("signupForm")
 .reset();
 
+setTimeout(()=>{
+
 loginTab.click();
 
+},1200);
 
-}catch(error){
 
-console.error(error);
+}
+catch(error){
+
+console.error(
+"Delivery Signup Error:",
+error
+);
 
 showMessage(
-error.message ||
+error?.message ||
 "Registration failed.",
 "error"
 );
 
 }
-
+finally{
 
 btn.disabled = false;
 
 hideLoader();
 
+}
+
 });
+
+
+/* =========================================
+   START
+========================================= */
+
+checkExistingSession();
 
 </script>
 
