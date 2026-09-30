@@ -242,9 +242,7 @@ class="message">
 </div>
 
 
-<!-- =========================
-LOGIN
-========================= -->
+<!-- LOGIN -->
 
 <div
 id="loginSection"
@@ -307,9 +305,7 @@ Login
 </div>
 
 
-<!-- =========================
-SIGNUP
-========================= -->
+<!-- SIGNUP -->
 
 <div
 id="signupSection"
@@ -404,11 +400,13 @@ id="signupBtn"
 type="submit">
 
 <i class="fa-solid fa-user-plus"></i>
+
 Register Delivery Boy
 
 </button>
 
 </form>
+
 
 <div class="small-text">
 Create your delivery boy account with email and password.
@@ -511,7 +509,7 @@ loader.style.display = "none";
 
 
 /* =========================================
-   LOGIN TAB
+   TABS
 ========================================= */
 
 loginTab.addEventListener("click",()=>{
@@ -529,10 +527,6 @@ hideMessage();
 });
 
 
-/* =========================================
-   SIGNUP TAB
-========================================= */
-
 signupTab.addEventListener("click",()=>{
 
 signupTab.classList.add("active");
@@ -549,7 +543,8 @@ hideMessage();
 
 
 /* =========================================
-   CHECK DELIVERY BOY PROFILE
+   DELIVERY BOY PROFILE
+   ONLY delivery_boys TABLE
 ========================================= */
 
 async function getDeliveryBoy(userId){
@@ -557,13 +552,15 @@ async function getDeliveryBoy(userId){
 const {
 data,
 error
-} = await sb
+} =
+await sb
 .from("delivery_boys")
 .select(
 "id,user_id,name,phone,email,is_active"
 )
 .eq("user_id",userId)
 .maybeSingle();
+
 
 if(error){
 
@@ -579,92 +576,287 @@ error.message
 
 }
 
+
 return data;
 
 }
 
 
 /* =========================================
-   CHECK EXISTING SESSION
+   DELIVERY BOY SIGNUP
 ========================================= */
 
-async function checkExistingSession(){
+document
+.getElementById("signupForm")
+.addEventListener("submit",async e=>{
+
+e.preventDefault();
+
+hideMessage();
+
+showLoader();
+
+
+const btn =
+document.getElementById("signupBtn");
+
+btn.disabled = true;
+
+
+const name =
+document
+.getElementById("signupName")
+.value
+.trim();
+
+
+const phone =
+document
+.getElementById("signupPhone")
+.value
+.trim();
+
+
+const email =
+document
+.getElementById("signupEmail")
+.value
+.trim()
+.toLowerCase();
+
+
+const password =
+document
+.getElementById("signupPassword")
+.value;
+
 
 try{
+
+/* VALIDATION */
+
+if(name.length < 2){
+
+throw new Error(
+"Please enter your full name."
+);
+
+}
+
+
+if(phone.length < 7){
+
+throw new Error(
+"Please enter a valid phone number."
+);
+
+}
+
+
+if(password.length < 6){
+
+throw new Error(
+"Password must be at least 6 characters."
+);
+
+}
+
+
+/* =====================================
+   AUTH SIGNUP
+===================================== */
 
 const {
 data,
 error
 } =
-await sb.auth.getSession();
+await sb.auth.signUp({
+
+email:email,
+
+password:password,
+
+options:{
+data:{
+role:"delivery_boy",
+name:name,
+phone:phone
+}
+}
+
+});
+
 
 if(error){
 
-console.error(error);
-
-return;
+throw error;
 
 }
 
-const user =
-data?.session?.user;
 
-if(!user){
+if(!data?.user){
 
-return;
+throw new Error(
+"Delivery boy account could not be created."
+);
 
 }
+
+
+/* =====================================
+   IMPORTANT
+
+   CREATE delivery_boys PROFILE
+===================================== */
+
+const deliveryBoyRow = {
+
+user_id:data.user.id,
+
+name:name,
+
+phone:phone,
+
+email:email,
+
+is_active:false
+
+};
 
 
 /*
-USER LOGGED IN
-CHECK WHETHER HE IS
-ACTUALLY A DELIVERY BOY
+   is_active = false
+
+   Admin can activate the delivery boy
+   from admin panel.
+
+   If you want automatic active account,
+   change false to true.
 */
 
-const boy =
-await getDeliveryBoy(user.id);
+
+const {
+data:profileData,
+error:profileError
+} =
+await sb
+.from("delivery_boys")
+.insert([deliveryBoyRow])
+.select()
+.single();
 
 
-if(!boy){
+if(profileError){
 
-await sb.auth.signOut();
-
-return;
-
-}
-
-
-if(boy.is_active !== true){
-
-await sb.auth.signOut();
-
-return;
-
-}
+console.error(
+"Delivery Boy Profile Error:",
+profileError
+);
 
 
 /*
-DELIVERY BOY ALREADY LOGGED IN
+   Auth account was created but
+   delivery profile failed.
+
+   If session exists, sign out.
 */
 
-window.location.replace("index.html");
+if(data.session){
+
+await sb.auth.signOut();
+
+}
+
+
+throw new Error(
+"Auth account created but delivery_boys profile could not be created: " +
+profileError.message
+);
+
+}
+
+
+/* =====================================
+   EMAIL CONFIRMATION ON
+===================================== */
+
+if(!data.session){
+
+showMessage(
+"Registration successful. Please verify your email. After verification, login here.",
+"success"
+);
+
+document
+.getElementById("signupForm")
+.reset();
+
+setTimeout(()=>{
+
+loginTab.click();
+
+},1500);
+
+return;
+
+}
+
+
+/* =====================================
+   PROFILE CREATED
+===================================== */
+
+showMessage(
+"Registration successful. Your account is waiting for admin activation.",
+"success"
+);
+
+
+/*
+   Since is_active=false,
+   don't open delivery panel.
+*/
+
+await sb.auth.signOut();
+
+
+document
+.getElementById("signupForm")
+.reset();
+
+
+loginTab.click();
+
 
 }
 catch(error){
 
 console.error(
-"Session Check:",
+"Delivery Signup Error:",
 error
 );
 
-}
+showMessage(
+error?.message ||
+"Registration failed.",
+"error"
+);
 
 }
+finally{
+
+btn.disabled = false;
+
+hideLoader();
+
+}
+
+});
 
 
 /* =========================================
    DELIVERY BOY LOGIN
+   ONLY delivery_boys TABLE
 ========================================= */
 
 document
@@ -676,6 +868,7 @@ e.preventDefault();
 hideMessage();
 
 showLoader();
+
 
 const btn =
 document.getElementById("loginBtn");
@@ -699,9 +892,7 @@ document
 
 try{
 
-/*
-SUPABASE AUTH LOGIN
-*/
+/* AUTH LOGIN */
 
 const {
 data,
@@ -737,15 +928,17 @@ throw new Error(
 
 
 /*
-IMPORTANT:
+   IMPORTANT:
 
-CHECK ONLY delivery_boys TABLE.
+   ONLY delivery_boys TABLE.
 
-CUSTOMER users TABLE IS NOT USED HERE.
+   users TABLE IS NEVER CHECKED.
 */
 
 const boy =
-await getDeliveryBoy(user.id);
+await getDeliveryBoy(
+user.id
+);
 
 
 if(!boy){
@@ -759,9 +952,7 @@ throw new Error(
 }
 
 
-/*
-CHECK ACTIVE STATUS
-*/
+/* ACTIVE CHECK */
 
 if(boy.is_active !== true){
 
@@ -774,9 +965,7 @@ throw new Error(
 }
 
 
-/*
-LOGIN SUCCESS
-*/
+/* SUCCESS */
 
 showMessage(
 "Login successful. Opening delivery panel...",
@@ -817,252 +1006,85 @@ hideLoader();
 
 
 /* =========================================
-   DELIVERY BOY SIGNUP
+   CHECK EXISTING DELIVERY SESSION
 ========================================= */
 
-document
-.getElementById("signupForm")
-.addEventListener("submit",async e=>{
-
-e.preventDefault();
-
-hideMessage();
-
-showLoader();
-
-const btn =
-document.getElementById("signupBtn");
-
-btn.disabled = true;
-
-
-const name =
-document
-.getElementById("signupName")
-.value
-.trim();
-
-
-const phone =
-document
-.getElementById("signupPhone")
-.value
-.trim();
-
-
-const email =
-document
-.getElementById("signupEmail")
-.value
-.trim()
-.toLowerCase();
-
-
-const password =
-document
-.getElementById("signupPassword")
-.value;
-
+async function checkExistingSession(){
 
 try{
-
-/*
-VALIDATION
-*/
-
-if(name.length < 2){
-
-throw new Error(
-"Please enter your full name."
-);
-
-}
-
-
-if(phone.length < 7){
-
-throw new Error(
-"Please enter a valid phone number."
-);
-
-}
-
-
-if(password.length < 6){
-
-throw new Error(
-"Password must be at least 6 characters."
-);
-
-}
-
-
-/*
-AUTH SIGNUP
-
-Name + phone are saved
-inside Supabase Auth metadata.
-*/
 
 const {
 data,
 error
 } =
-await sb.auth.signUp({
-
-email:email,
-
-password:password,
-
-options:{
-data:{
-name:name,
-phone:phone
-}
-}
-
-});
+await sb.auth.getSession();
 
 
 if(error){
 
-throw error;
+console.error(error);
+
+return;
+
+}
+
+
+const user =
+data?.session?.user;
+
+
+if(!user){
+
+return;
 
 }
 
 
 /*
-SESSION CREATED
-
-If email confirmation is OFF,
-we have a logged-in user.
+   ONLY delivery_boys
 */
 
-if(data?.session && data?.user){
-
-/*
-CHECK DELIVERY PROFILE
-
-Normally your database trigger
-should create delivery_boys row.
-*/
-
-let boy = null;
-
-try{
-
-boy =
+const boy =
 await getDeliveryBoy(
-data.user.id
+user.id
 );
 
+
+if(!boy){
+
+await sb.auth.signOut();
+
+return;
+
 }
-catch(profileError){
 
-console.error(
-profileError
-);
-
-}
-
-
-/*
-PROFILE EXISTS
-*/
-
-if(boy){
 
 if(boy.is_active !== true){
 
 await sb.auth.signOut();
 
-throw new Error(
-"Delivery boy account created but it is inactive. Contact admin."
-);
+return;
 
 }
 
-showMessage(
-"Registration successful. Opening delivery panel...",
-"success"
-);
 
-setTimeout(()=>{
+/* ALREADY VALID DELIVERY BOY */
 
 window.location.replace(
 "index.html"
 );
 
-},800);
-
-return;
-
-}
-
-
-/*
-AUTH ACCOUNT CREATED BUT
-DELIVERY PROFILE NOT FOUND
-
-Do not open delivery panel.
-*/
-
-await sb.auth.signOut();
-
-showMessage(
-"Auth account created, but delivery boy profile was not created. Please contact admin.",
-"error"
-);
-
-return;
-
-}
-
-
-/*
-EMAIL CONFIRMATION ON
-*/
-
-showMessage(
-"Registration successful. Please verify your email, then login.",
-"success"
-);
-
-document
-.getElementById("signupForm")
-.reset();
-
-setTimeout(()=>{
-
-loginTab.click();
-
-},1200);
-
-
 }
 catch(error){
 
 console.error(
-"Delivery Signup Error:",
+"Session Check Error:",
 error
 );
 
-showMessage(
-error?.message ||
-"Registration failed.",
-"error"
-);
-
-}
-finally{
-
-btn.disabled = false;
-
-hideLoader();
-
 }
 
-});
+}
 
 
 /* =========================================
